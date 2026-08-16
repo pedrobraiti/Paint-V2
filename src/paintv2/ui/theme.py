@@ -161,6 +161,12 @@ def build_stylesheet(palette: Palette = PALETTE) -> str:
         text-transform: uppercase;
     }}
 
+    /* Rótulos não pintam fundo próprio: dentro de um QGroupBox ou de um botão,
+       o fundo herdado desenharia uma caixa escura em volta do texto. */
+    QLabel {{
+        background: transparent;
+    }}
+
     QLabel[role="heading"] {{
         font-size: 26px;
         font-weight: 700;
@@ -218,7 +224,6 @@ def build_stylesheet(palette: Palette = PALETTE) -> str:
     QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
         border-color: {palette.accent};
     }}
-    QComboBox::drop-down {{ border: none; width: 22px; }}
     QComboBox QAbstractItemView {{
         background: {palette.surface_raised};
         border: 1px solid {palette.border};
@@ -228,10 +233,14 @@ def build_stylesheet(palette: Palette = PALETTE) -> str:
         selection-color: {palette.accent_text};
         outline: none;
     }}
+    /* A seta do combo fica com o desenho nativo do Fusion. Já os degraus do
+       spin somem: assim que a folha de estilo toca no QSpinBox, o Qt para de
+       desenhar as setinhas e sobra um bloco cinza sem função aparente. Todo
+       campo numérico aqui vem acompanhado de um slider, e a roda do mouse e as
+       setas do teclado continuam ajustando o valor. */
     QSpinBox::up-button, QSpinBox::down-button,
     QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
-        width: 16px;
-        background: {palette.surface_raised};
+        width: 0;
         border: none;
     }}
 
@@ -257,6 +266,12 @@ def build_stylesheet(palette: Palette = PALETTE) -> str:
     QSlider::sub-page:horizontal {{
         background: {palette.accent};
         border-radius: 2px;
+    }}
+    /* Num controle que vai de -100 a +100, preencher a partir da esquerda faria
+       o zero parecer meio caminho andado. Nesses o trilho fica neutro e só a
+       posição do cursor informa o valor. */
+    QSlider[bipolar="true"]::sub-page:horizontal {{
+        background: {palette.border};
     }}
     QSlider::handle:horizontal {{
         width: 14px;

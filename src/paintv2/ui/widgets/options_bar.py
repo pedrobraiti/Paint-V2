@@ -267,6 +267,13 @@ class OptionsBar(QWidget):
             control.blockSignals(False)
         self._amount_spin.setSuffix(definition.amount_suffix)
 
+        # Numa faixa que passa pelo zero, preencher o trilho desde a esquerda
+        # daria a impressão de valor alto no neutro. Mudar a propriedade exige
+        # repolir o widget para o Qt reavaliar a folha de estilo.
+        self._amount_slider.setProperty("bipolar", definition.amount_min < 0)
+        self._amount_slider.style().unpolish(self._amount_slider)
+        self._amount_slider.style().polish(self._amount_slider)
+
     def _on_amount_changed(self, value: int) -> None:
         self._settings.set_amount(self._active_mode, int(value))
 

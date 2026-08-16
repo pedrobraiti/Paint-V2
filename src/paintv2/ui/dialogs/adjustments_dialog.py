@@ -144,6 +144,7 @@ class AdjustmentsDialog(QDialog):
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(minimum, maximum)
         slider.setMinimumWidth(240)
+        slider.setProperty("bipolar", minimum < 0)
 
         spin = QSpinBox()
         spin.setRange(minimum, maximum)
