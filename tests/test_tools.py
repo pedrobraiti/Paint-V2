@@ -186,6 +186,46 @@ def test_letter_shortcut_switches_tool(canvas, qapp):
     assert canvas.tool_key == "eraser"
 
 
+def test_text_tool_renders_what_was_typed(canvas):
+    canvas.set_tool("text")
+    tool = canvas.tool()
+    tool.press(CanvasEvent(position=QPointF(12, 20), button=Qt.MouseButton.LeftButton))
+
+    editor = tool._editor
+    assert editor is not None, "a caixa de texto não abriu"
+    editor.setPlainText("Paint-V2")
+
+    before = canvas.document.pixels.copy()
+    tool.commit_pending()
+
+    assert not np.array_equal(before, canvas.document.pixels)
+    assert canvas.document.history.can_undo
+
+
+def test_text_tool_writes_nothing_when_cancelled(canvas):
+    canvas.set_tool("text")
+    tool = canvas.tool()
+    tool.press(CanvasEvent(position=QPointF(12, 20), button=Qt.MouseButton.LeftButton))
+    tool._editor.setPlainText("descartado")
+
+    before = canvas.document.pixels.copy()
+    tool.key_press(Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier)
+    tool.commit_pending()
+
+    assert np.array_equal(before, canvas.document.pixels)
+
+
+def test_empty_text_leaves_no_trace(canvas):
+    canvas.set_tool("text")
+    tool = canvas.tool()
+    tool.press(CanvasEvent(position=QPointF(12, 20), button=Qt.MouseButton.LeftButton))
+
+    before = canvas.document.pixels.copy()
+    tool.commit_pending()
+
+    assert np.array_equal(before, canvas.document.pixels)
+
+
 def test_every_registered_tool_declares_its_metadata():
     for tool_class in TOOL_CLASSES:
         assert tool_class.key and tool_class.label and tool_class.hint

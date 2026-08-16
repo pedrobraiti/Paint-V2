@@ -98,6 +98,45 @@ def test_opening_a_missing_file_does_not_crash(editor, tmp_path, monkeypatch):
     assert editor.document.width > 0
 
 
+def test_adjustments_dialog_applies_on_accept(editor):
+    from paintv2.ui.dialogs import AdjustmentsDialog
+
+    dialog = AdjustmentsDialog(editor.document, editor._canvas, False, editor)
+    before = editor.document.pixels.copy()
+    dialog._sliders["saturation"].setValue(120)
+    dialog.accept()
+
+    assert not np.array_equal(before, editor.document.pixels)
+    assert editor.document.history.can_undo
+
+
+def test_adjustments_dialog_restores_pixels_on_cancel(editor):
+    from paintv2.ui.dialogs import AdjustmentsDialog
+
+    dialog = AdjustmentsDialog(editor.document, editor._canvas, False, editor)
+    before = editor.document.pixels.copy()
+    dialog._sliders["contrast"].setValue(80)
+    dialog._render_preview()
+    assert not np.array_equal(before, editor.document.pixels)
+
+    dialog.reject()
+
+    assert np.array_equal(before, editor.document.pixels)
+    assert editor.document.history.can_undo is False
+
+
+def test_adjustments_restricted_to_selection_spares_the_rest(editor):
+    from paintv2.ui.dialogs import AdjustmentsDialog
+
+    editor._canvas.selection.set_rect((0, 0, 40, editor.document.height))
+    dialog = AdjustmentsDialog(editor.document, editor._canvas, True, editor)
+    dialog._sliders["saturation"].setValue(150)
+    outside_before = editor.document.pixels[:, 60:].copy()
+    dialog.accept()
+
+    assert np.array_equal(outside_before, editor.document.pixels[:, 60:])
+
+
 def test_hub_lists_saved_projects(qapp, library, tmp_path):
     image = np.zeros((10, 10, 4), dtype=np.uint8)
     image[..., 3] = 255
