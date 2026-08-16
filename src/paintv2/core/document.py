@@ -208,14 +208,20 @@ class Document:
         self.commit_replace("Tamanho da tela", before)
 
     def apply_adjustments(
-        self, settings: AdjustmentSettings, rect: Rect | None = None
+        self,
+        settings: AdjustmentSettings,
+        rect: Rect | None = None,
+        mask: np.ndarray | None = None,
     ) -> Rect | None:
-        """Aplica ajustes globais ao documento ou apenas a ``rect``."""
+        """Aplica ajustes ao documento, a ``rect``, ou só aos pixels de ``mask``."""
         target = clip_rect(rect or self.bounds, self.width, self.height)
         if target is None or settings.is_identity:
             return None
         before = view(self._pixels, target).copy()
-        view(self._pixels, target)[:] = apply_adjustments(before, settings)
+        adjusted = apply_adjustments(before, settings)
+        if mask is not None:
+            adjusted = np.where(view(mask, target)[..., None], adjusted, before)
+        view(self._pixels, target)[:] = adjusted
         self.commit_patch("Ajustes de imagem", target, before)
         return target
 

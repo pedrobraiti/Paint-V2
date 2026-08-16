@@ -80,24 +80,29 @@ def contiguous_region(
     return filled, (min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
 
 
-def flood_fill(
+def compute_fill_region(
     pixels: np.ndarray,
     origin_x: int,
     origin_y: int,
-    color: np.ndarray,
     tolerance: float = 0.0,
     contiguous: bool = True,
-) -> Rect | None:
-    """Pinta a região a partir de ``(origin_x, origin_y)``.
+    clip: np.ndarray | None = None,
+) -> tuple[np.ndarray, Rect] | None:
+    """Máscara e retângulo da região que o balde preencheria.
 
-    Devolve o retângulo alterado, ou ``None`` se o clique caiu fora da imagem ou
-    nada mudou.
+    Separado do preenchimento em si porque quem edita precisa conhecer o
+    retângulo *antes* de escrever, para guardar o estado anterior no histórico.
     """
     height, width = pixels.shape[:2]
     if not (0 <= origin_x < width and 0 <= origin_y < height):
         return None
 
     similar = similarity_mask(pixels, origin_x, origin_y, tolerance)
+    if clip is not None:
+        # Fora da seleção nada é preenchido, e a região também não pode
+        # atravessar a borda dela para reaparecer do outro lado.
+        similar = similar & clip
+
     if contiguous:
         region, rect = contiguous_region(similar, origin_x, origin_y)
     else:
@@ -115,6 +120,26 @@ def flood_fill(
 
     if not region.any():
         return None
+    return region, rect
 
+
+def flood_fill(
+    pixels: np.ndarray,
+    origin_x: int,
+    origin_y: int,
+    color: np.ndarray,
+    tolerance: float = 0.0,
+    contiguous: bool = True,
+    clip: np.ndarray | None = None,
+) -> Rect | None:
+    """Pinta a região a partir de ``(origin_x, origin_y)``.
+
+    Devolve o retângulo alterado, ou ``None`` se o clique caiu fora da imagem ou
+    nada mudou.
+    """
+    found = compute_fill_region(pixels, origin_x, origin_y, tolerance, contiguous, clip)
+    if found is None:
+        return None
+    region, rect = found
     pixels[region] = np.asarray(color, dtype=np.uint8)
     return rect

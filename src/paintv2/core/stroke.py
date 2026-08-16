@@ -56,12 +56,14 @@ class StrokeEngine:
         size: float,
         buffers: StrokeBuffers,
         seed: int | None = None,
+        clip_mask: np.ndarray | None = None,
     ) -> None:
         self._pixels = pixels
         self._tip = tip
         self._mode = mode
         self._size = float(np.clip(size, MIN_SIZE, MAX_SIZE))
         self._buffers = buffers
+        self._clip_mask = clip_mask
         self._rng = np.random.default_rng(seed)
         self._snapshot = TileSnapshot(pixels)
         self._last_point: tuple[float, float] | None = None
@@ -120,6 +122,14 @@ class StrokeEngine:
         self._buffers.clear(self._dirty)
         return self._dirty
 
+    def original_region(self, rect: Rect) -> np.ndarray:
+        """Pixels de antes do traço — o "antes" do patch de desfazer.
+
+        Os ladrilhos foram preservados no caminho, então isso não custa uma nova
+        varredura da imagem.
+        """
+        return self._snapshot.region(rect)
+
     def _stamp(self, x: float, y: float, pressure: float) -> Rect | None:
         size = self._effective_size(pressure)
         if self._tip.scatter:
@@ -143,6 +153,8 @@ class StrokeEngine:
         crop_x = clipped[0] - left
         crop_y = clipped[1] - top
         alpha = alpha[crop_y : crop_y + clipped[3], crop_x : crop_x + clipped[2]]
+        if self._clip_mask is not None:
+            alpha = alpha * view(self._clip_mask, clipped)
         if not alpha.any():
             return None
 
