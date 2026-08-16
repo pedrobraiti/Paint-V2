@@ -20,7 +20,8 @@ Público: uso pessoal diário do usuário — abrir uma imagem, retocar rápido,
 
 ## Fase atual
 
-MVP em desenvolvimento — arquitetura definida, implementação do núcleo e da UI.
+Versão 1.0.0 completa: núcleo, ferramentas, HUB, editor, 256 testes automatizados,
+executável e instalador prontos. Pendente apenas a publicação no GitHub.
 
 ## Restrições e bloqueios de longo prazo
 

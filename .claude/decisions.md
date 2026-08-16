@@ -53,6 +53,43 @@ que num traço de pincel costuma ser uma fração mínima da tela.
 **Alternativas consideradas:** snapshot completo — simples porém proibitivo; diff por
 tiles — ganho marginal sobre o bbox para a carga real de um editor de pintura.
 
+## 2026-08-16 — Máscara do traço acumulada em modo *screen*
+
+**Motivo:** a regra "o efeito não se intensifica ao repassar" e a expectativa de
+que Spray, Marcador e Aquarela *construam* cor em camadas parecem opostas. A
+acumulação `1 - (1-a)(1-b)` concilia as duas: com fluxo total a máscara satura no
+primeiro toque (repassar não muda nada), e com fluxo parcial ela cresce camada a
+camada, como o depósito real dessas pontas. Como a máscara é limitada a 1 e o modo
+sempre aplica contra o snapshot do início, nada dispara.
+
+**Alternativas consideradas:** `max()` puro — mataria o comportamento do
+aerógrafo; soma simples — estouraria e reintroduziria a dependência da velocidade.
+
+## 2026-08-16 — Atalhos de uma letra no canvas, não em QAction
+
+**Motivo:** `QAction` intercepta a tecla antes do widget em foco. Com a ferramenta
+de texto aberta, digitar "b" trocaria de ferramenta em vez de escrever a letra —
+e a letra sumiria. Tratando as teclas em `CanvasView.keyPressEvent`, elas só
+chegam quando o próprio canvas tem o foco. Os atalhos com Ctrl continuam em
+`QAction` (o usuário espera vê-los no menu) e são desviados para o campo de texto
+por `MainWindow._forward_to_text_widget` quando há um em foco.
+
+**Alternativas consideradas:** `WidgetWithChildrenShortcut` — não resolve, porque
+o campo de texto é filho do canvas; desabilitar as ações enquanto o texto está
+aberto — funciona, mas espalha o acoplamento por toda a janela.
+
+## 2026-08-16 — Distribuição em pasta (onedir) com instalador Inno Setup
+
+**Motivo:** o modo arquivo-único extrai ~110 MB de Qt para o disco a cada
+execução, o que se sente num app aberto várias vezes por dia. A pasta inicia
+imediatamente, e o instalador esconde essa pasta do usuário. Instalação por
+usuário (`PrivilegesRequired=lowest`) evita o prompt de administrador, e o atalho
+no Menu Iniciar é o que faz o app aparecer na busca do Windows — que era um
+requisito explícito.
+
+**Alternativas consideradas:** `--onefile` — mais simples de distribuir, porém
+lento a cada abertura; MSIX — exigiria assinatura e certificado.
+
 ## 2026-08-16 — Biblioteca de projetos como índice de arquivos, sem formato próprio
 
 **Motivo:** o HUB precisa listar "os projetos que eu já fiz" e o fluxo principal do
