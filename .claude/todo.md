@@ -4,11 +4,11 @@ Plano vivo do projeto. Tarefas e subtarefas, marcadas conforme concluídas.
 
 ## Em progresso
 
-Nada em aberto — a versão 1.0.0 está publicada.
+Nada em aberto — a versão 1.1.0 está publicada.
 
 ## Próximas
 
-Ideias para depois do 1.0, em ordem de valor percebido:
+Ideias para depois do 1.1, em ordem de valor percebido:
 
 - [ ] Camadas (o desenho hoje é de camada única + seleção flutuante)
 - [ ] Gradiente e padrões no balde de tinta
@@ -16,6 +16,7 @@ Ideias para depois do 1.0, em ordem de valor percebido:
 - [ ] Histórico visual navegável (lista de passos, não só Ctrl+Z)
 - [ ] Exportar recorte da seleção direto para arquivo
 - [ ] Preferências persistentes (última pasta, tamanho de pincel, tema)
+- [ ] Prévia dos ajustes só na área visível, para responder na hora em fotos grandes
 
 ## Concluído
 
@@ -41,3 +42,12 @@ Ideias para depois do 1.0, em ordem de valor percebido:
 - [x] Repositório público github.com/pedrobraiti/Paint-V2
 - [x] Release v1.0.0 com o instalador anexado
 - [x] CI no GitHub Actions rodando a suíte no Windows
+
+### 1.1.0 — retorno do primeiro uso real
+
+- [x] Pincel até 5000 px no campo, com a rampa parando em 1000
+- [x] Carimbo processado em faixas paralelas (traço 2,5× a 5× mais rápido)
+- [x] Pincéis de contraste e de realce tonal (curva em S)
+- [x] Barra de ações rápidas com desfazer/refazer
+- [x] `Ctrl+Shift+Z` refaz, além de `Ctrl+Y`
+- [x] Desfazer uma pincelada não reenquadra mais a vista
