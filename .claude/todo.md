@@ -4,11 +4,7 @@ Plano vivo do projeto. Tarefas e subtarefas, marcadas conforme concluídas.
 
 ## Em progresso
 
-- [ ] Publicação
-  - [x] `README.md` com capturas, atalhos e arquitetura
-  - [x] `LICENSE` (MIT)
-  - [ ] Repositório público `Paint-V2` no GitHub
-  - [ ] Release 1.0.0 com o instalador anexado
+Nada em aberto — a versão 1.0.0 está publicada.
 
 ## Próximas
 
@@ -41,3 +37,7 @@ Ideias para depois do 1.0, em ordem de valor percebido:
 - [x] Ícone Paint-V2 (cores invertidas) em .ico multi-resolução
 - [x] Testes automatizados (256): núcleo e interface
 - [x] Build PyInstaller + instalador Inno Setup
+- [x] `README.md` com capturas, atalhos e arquitetura, e `LICENSE` (MIT)
+- [x] Repositório público github.com/pedrobraiti/Paint-V2
+- [x] Release v1.0.0 com o instalador anexado
+- [x] CI no GitHub Actions rodando a suíte no Windows

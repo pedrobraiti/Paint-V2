@@ -4,18 +4,21 @@
 > de forma relativamente detalhada. É o PRIMEIRO arquivo que a próxima sessão lê.
 > Mantenha-o vivo e específico — detalhado o bastante para retomar sem reconstruir o raciocínio.
 
-**Última atualização:** 2026-08-16 — versão 1.0.0 pronta e empacotada
+**Última atualização:** 2026-08-16 — versão 1.0.0 publicada
 
 ## Onde parei
 
-O Paint-V2 está funcional de ponta a ponta: núcleo, ferramentas, HUB, editor,
-testes (256 passando) e empacotamento. O executável foi gerado em
-`dist/Paint-V2/Paint-V2.exe` (114 MB em pasta) e o instalador em
-`dist/installer/Paint-V2-Setup-1.0.0.exe`. O app foi instalado na máquina do
-usuário em `%LOCALAPPDATA%\Programs\Paint-V2` com atalho no Menu Iniciar.
+Ciclo completo entregue. O Paint-V2 funciona de ponta a ponta (núcleo,
+ferramentas, HUB, editor), tem 256 testes passando, foi empacotado
+(`dist/Paint-V2/Paint-V2.exe`, 114 MB em pasta) e instalado na máquina do usuário
+em `%LOCALAPPDATA%\Programs\Paint-V2`, com atalho no Menu Iniciar.
 
-Falta apenas publicar: criar o repositório público `Paint-V2` no GitHub, dar push
-e anexar o instalador a uma release 1.0.0.
+Publicado em <https://github.com/pedrobraiti/Paint-V2>, com a release
+[v1.0.0](https://github.com/pedrobraiti/Paint-V2/releases/tag/v1.0.0) levando o
+instalador anexado e CI rodando a suíte no Windows a cada push.
+
+Não há tarefa pendente; o que vier agora são melhorias listadas em
+`.claude/todo.md` (camadas, carimbo, gradiente, histórico visual).
 
 ## Contexto mental
 
@@ -39,12 +42,14 @@ Duas armadilhas já resolvidas e que voltariam a morder:
 
 ## Próximo passo concreto
 
-Criar o repositório e publicar:
+Nada obrigatório. Se o usuário voltar pedindo evolução, o item de maior impacto
+da lista é **camadas** — hoje o documento é de camada única mais uma seleção
+flutuante, e `core/document.py` teria de passar a compor uma pilha antes de
+entregar o buffer ao `QImage`.
 
-```powershell
-gh repo create Paint-V2 --public --source=. --remote=origin --push
-gh release create v1.0.0 "dist/installer/Paint-V2-Setup-1.0.0.exe" --title "Paint-V2 1.0.0" --notes "..."
-```
+Ao lançar uma versão nova: subir `APP_VERSION` em `src/paintv2/__init__.py`,
+`version` no `pyproject.toml`, `AppVersion` no `packaging/paintv2.iss` e os
+números em `packaging/version_info.txt` — os quatro precisam bater.
 
 ## Em aberto / armadilhas
 
