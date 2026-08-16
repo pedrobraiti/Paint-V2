@@ -1,0 +1,8 @@
+# Dependências de execução
+PySide6==6.11.1
+numpy==2.5.2
+Pillow==12.3.0
+
+# Dependências de desenvolvimento/empacotamento
+pytest==9.1.1
+pyinstaller==6.22.1

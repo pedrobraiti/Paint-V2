@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paintv2"
+version = "1.0.0"
+description = "Editor de imagens desktop inspirado no Microsoft Paint, com pincéis de efeito."
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6>=6.7",
+    "numpy>=1.26",
+    "Pillow>=10.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pyinstaller>=6.6",
+]
+
+[project.gui-scripts]
+paintv2 = "paintv2.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+paintv2 = ["resources/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+node_modules/
+.DS_Store
+.claude/.last-stop-signature
+
+# Build artefatos
+build/
+dist/
+*.spec.bak
+*.egg-info/
+.pytest_cache/
+installer/Output/
