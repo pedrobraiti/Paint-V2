@@ -249,9 +249,3 @@ class Document:
         self._name = None
         self.is_dirty = False
         return destination
-
-    def thumbnail(self, max_size: int = 256) -> np.ndarray:
-        """Miniatura RGBA para o HUB, preservando a proporção."""
-        image = Image.fromarray(self._pixels, mode="RGBA")
-        image.thumbnail((max_size, max_size), Image.LANCZOS)
-        return np.array(image, dtype=np.uint8)

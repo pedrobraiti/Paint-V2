@@ -7,6 +7,8 @@ array NumPy, esse desenho cai direto no documento — sem conversão, sem cópia
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QImage, QPainter, QPainterPath
@@ -59,15 +61,25 @@ def rasterize_path(path: QPainterPath, width: int, height: int) -> np.ndarray:
     return flat.reshape(height, stride)[:, :width] > 127
 
 
-def painter_for(document: Document, selection: Selection, antialias: bool) -> QPainter:
-    """``QPainter`` pronto para desenhar no documento, respeitando a seleção."""
-    painter = QPainter(document_image(document))
+@contextmanager
+def painter_for(document: Document, selection: Selection, antialias: bool):
+    """``QPainter`` pronto para desenhar no documento, respeitando a seleção.
+
+    É um gerenciador de contexto de propósito: o ``QImage`` que serve de destino
+    precisa continuar vivo enquanto o pintor existir, e prendê-lo ao escopo do
+    ``with`` é o que garante isso.
+    """
+    image = document_image(document)
+    painter = QPainter(image)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing, antialias)
     painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, antialias)
     painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, antialias)
     if selection.is_active and selection.bounds is not None:
         painter.setClipPath(_selection_clip(selection))
-    return painter
+    try:
+        yield painter
+    finally:
+        painter.end()
 
 
 def _selection_clip(selection: Selection) -> QPainterPath:

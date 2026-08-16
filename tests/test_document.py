@@ -110,12 +110,6 @@ def test_saving_jpeg_flattens_transparency_over_white(tmp_path):
     assert tuple(reopened.pixels[0, 0]) == (255, 255, 255, 255)
 
 
-def test_thumbnail_fits_inside_the_requested_box():
-    document = Document.blank(400, 200)
-    thumbnail = document.thumbnail(64)
-    assert max(thumbnail.shape[:2]) <= 64
-
-
 def test_flood_fill_stops_at_a_barrier():
     document = Document.blank(20, 20, (255, 255, 255, 255))
     document.pixels[:, 10] = (0, 0, 0, 255)

@@ -170,11 +170,12 @@ class TextTool(Tool):
         if before is None:
             return
 
-        painter = painter_for(self.document, self.context.selection, self.settings.antialias)
-        painter.setFont(font)
-        painter.setPen(QPen(self._color))
-        painter.drawText(box, Qt.TextFlag.TextWordWrap, text)
-        painter.end()
+        with painter_for(
+            self.document, self.context.selection, self.settings.antialias
+        ) as painter:
+            painter.setFont(font)
+            painter.setPen(QPen(self._color))
+            painter.drawText(box, Qt.TextFlag.TextWordWrap, text)
 
         self.document.commit_patch(self.label, rect, before)
         self.context.notify_document_changed()

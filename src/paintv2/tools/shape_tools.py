@@ -111,10 +111,11 @@ class _VectorTool(Tool):
         before = self.document.snapshot_region(rect)
         if before is None:
             return
-        painter = painter_for(self.document, self.context.selection, self.settings.antialias)
-        self._configure(painter)
-        painter.drawPath(path)
-        painter.end()
+        with painter_for(
+            self.document, self.context.selection, self.settings.antialias
+        ) as painter:
+            self._configure(painter)
+            painter.drawPath(path)
         self.document.commit_patch(self.label, rect, before)
         self.context.notify_document_changed()
         self.context.refresh()

@@ -34,7 +34,6 @@ MAX_ZOOM = 32.0
 ZOOM_WHEEL_STEP = 1.15
 CHECKER_TILE = 12
 ANTS_INTERVAL_MS = 90
-PAN_MARGIN = 80
 
 
 class CanvasView(QWidget):
@@ -46,6 +45,7 @@ class CanvasView(QWidget):
     document_modified = Signal()
     hint_requested = Signal(str)
     tool_changed = Signal(str)
+    tool_shortcut_pressed = Signal(str)
     selection_changed = Signal()
 
     def __init__(self, settings: ToolSettings, parent: QWidget | None = None) -> None:
@@ -64,6 +64,10 @@ class CanvasView(QWidget):
         self._cursor_position = QPointF(-1.0, -1.0)
         self._cursor_inside = False
 
+        # Um documento carregado antes de a janela existir seria enquadrado
+        # contra um widget de tamanho zero; o reenquadramento fica pendente até
+        # o primeiro resize real.
+        self._pending_fit = True
         self._panning = False
         self._pan_anchor = QPointF()
         self._space_held = False
@@ -77,6 +81,14 @@ class CanvasView(QWidget):
 
         self._tools: dict[str, Tool] = {
             tool_class.key: tool_class(self) for tool_class in TOOL_CLASSES
+        }
+        # Atalhos de uma letra ficam no canvas, e não em QActions da janela:
+        # assim eles não roubam a tecla de quem está digitando com a ferramenta
+        # de texto, cujo campo de edição fica em foco no lugar do canvas.
+        self._letter_shortcuts = {
+            tool_class.shortcut.upper(): tool_class.key
+            for tool_class in TOOL_CLASSES
+            if len(tool_class.shortcut) == 1
         }
         self._tool_key = DEFAULT_TOOL_KEY
         self._previous_tool_key = DEFAULT_TOOL_KEY
@@ -107,6 +119,7 @@ class CanvasView(QWidget):
         self._document = document
         self._selection = Selection(document.width, document.height)
         self._selection_outline = None
+        self._pending_fit = True
         self.fit_to_view()
         self.document_modified.emit()
         self.selection_changed.emit()
@@ -236,6 +249,9 @@ class CanvasView(QWidget):
         """Enquadra a imagem inteira, sem ampliar além do tamanho real."""
         if self._document.width <= 0 or self._document.height <= 0:
             return
+        # Antes de a janela aparecer, o tamanho do widget ainda é o provisório do
+        # layout: o enquadramento sairia errado, então fica pendente.
+        self._pending_fit = not self.isVisible() or self.width() <= 1
         available_width = max(self.width() - 48, 64)
         available_height = max(self.height() - 48, 64)
         zoom = min(
@@ -252,6 +268,7 @@ class CanvasView(QWidget):
             (self.width() - self._document.width * self._zoom) / 2.0,
             (self.height() - self._document.height * self._zoom) / 2.0,
         )
+        self._clamp_origin()
         self._tool.on_view_changed()
         self.update()
 
@@ -262,16 +279,15 @@ class CanvasView(QWidget):
         self.update()
 
     def _clamp_origin(self) -> None:
-        """Impede que a imagem seja arrastada inteiramente para fora da vista."""
-        scaled_width = self._document.width * self._zoom
-        scaled_height = self._document.height * self._zoom
-        min_x = min(PAN_MARGIN - scaled_width, (self.width() - scaled_width) / 2.0)
-        max_x = max(self.width() - PAN_MARGIN, (self.width() - scaled_width) / 2.0)
-        min_y = min(PAN_MARGIN - scaled_height, (self.height() - scaled_height) / 2.0)
-        max_y = max(self.height() - PAN_MARGIN, (self.height() - scaled_height) / 2.0)
+        """Centraliza o que cabe na vista e impede arrastar a imagem para fora.
+
+        Enquanto a imagem couber inteira, ela fica centralizada — inclusive ao
+        redimensionar a janela. Ampliada, o arraste é limitado para que a área de
+        trabalho nunca fique vazia.
+        """
         self._origin = QPointF(
-            float(np.clip(self._origin.x(), min_x, max_x)),
-            float(np.clip(self._origin.y(), min_y, max_y)),
+            _clamp_axis(self._origin.x(), self._document.width * self._zoom, self.width()),
+            _clamp_axis(self._origin.y(), self._document.height * self._zoom, self.height()),
         )
 
     # -------------------------------------------------------------- desenho
@@ -465,6 +481,16 @@ class CanvasView(QWidget):
             return
         if self._tool.key_press(event.key(), event.modifiers()):
             return
+        if not event.modifiers():
+            letter = event.text().upper()
+            if letter == "X":
+                self._settings.swap_colors()
+                return
+            tool_key = self._letter_shortcuts.get(letter)
+            if tool_key is not None:
+                self.set_tool(tool_key)
+                self.tool_shortcut_pressed.emit(tool_key)
+                return
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event) -> None:
@@ -483,8 +509,16 @@ class CanvasView(QWidget):
         self.cursor_left.emit()
         self.update()
 
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        if self._pending_fit:
+            self.fit_to_view()
+
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
+        if self._pending_fit and self.isVisible() and self.width() > 1:
+            self.fit_to_view()
+            return
         self._clamp_origin()
         self._tool.on_view_changed()
 
@@ -493,6 +527,12 @@ class CanvasView(QWidget):
             self.setCursor(Qt.CursorShape.BlankCursor)
             return
         self.setCursor(self._tool.cursor())
+
+
+def _clamp_axis(origin: float, scaled_size: float, viewport_size: float) -> float:
+    if scaled_size <= viewport_size:
+        return (viewport_size - scaled_size) / 2.0
+    return float(np.clip(origin, viewport_size - scaled_size, 0.0))
 
 
 def _checker_brush() -> QBrush:
