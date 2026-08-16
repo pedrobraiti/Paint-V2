@@ -8,7 +8,7 @@ inclusive.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import Qt, QTimer
 
 from ..core import brush_modes
 from ..core.brush_modes import BrushMode

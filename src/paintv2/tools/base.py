@@ -95,7 +95,7 @@ class ToolContext(Protocol):
 
     def document_transform(self): ...
 
-    def canvas_widget(self) -> "CanvasView": ...
+    def canvas_widget(self) -> CanvasView: ...
 
 
 class Tool:
@@ -140,7 +140,7 @@ class Tool:
         """Devolve ``True`` se consumiu a tecla."""
         return False
 
-    def paint_overlay(self, painter: QPainter, view: "CanvasView") -> None:
+    def paint_overlay(self, painter: QPainter, view: CanvasView) -> None:
         """Desenha guias temporárias por cima da tela (não altera pixels)."""
 
     def on_view_changed(self) -> None:

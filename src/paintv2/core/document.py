@@ -61,7 +61,7 @@ class Document:
     @classmethod
     def blank(
         cls, width: int, height: int, color: tuple[int, int, int, int] = WHITE
-    ) -> "Document":
+    ) -> Document:
         """Tela em branco preenchida com ``color``."""
         width = max(1, min(int(width), MAX_DIMENSION))
         height = max(1, min(int(height), MAX_DIMENSION))
@@ -70,7 +70,7 @@ class Document:
         return cls(pixels)
 
     @classmethod
-    def open(cls, path: str | Path) -> "Document":
+    def open(cls, path: str | Path) -> Document:
         """Carrega um arquivo de imagem, respeitando a orientação EXIF."""
         resolved = Path(path)
         with Image.open(resolved) as image:

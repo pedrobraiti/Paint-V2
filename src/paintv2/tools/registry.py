@@ -17,7 +17,7 @@ from .brush_tools import (
     SharpenBrushTool,
     SprayTool,
 )
-from .selection_tools import SelectLassoTool, SelectRectangleTool, SelectionTool
+from .selection_tools import SelectionTool, SelectLassoTool, SelectRectangleTool
 from .shape_tools import CurveTool, LineTool, ShapeTool
 from .text_tool import TextTool
 

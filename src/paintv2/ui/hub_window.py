@@ -7,7 +7,7 @@ primeiro lugar por ser o caminho do dia a dia; a tela em branco fica ao lado.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
@@ -339,7 +339,7 @@ def _thumbnail_pixmap(entry: ProjectEntry) -> QPixmap:
 
 def _relative_time(entry: ProjectEntry) -> str:
     """Data em linguagem natural — mais útil que um carimbo exato na lista."""
-    delta = datetime.now(timezone.utc) - entry.opened_datetime
+    delta = datetime.now(UTC) - entry.opened_datetime
     seconds = max(delta.total_seconds(), 0)
     if seconds < 60:
         return "agora há pouco"

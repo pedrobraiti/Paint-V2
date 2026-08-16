@@ -378,10 +378,10 @@ def selection_outline(selection) -> QPainterPath | None:
     horizontal = np.diff(padded.astype(np.int8), axis=1)
     vertical = np.diff(padded.astype(np.int8), axis=0)
 
-    for row, column in zip(*np.nonzero(horizontal)):
+    for row, column in zip(*np.nonzero(horizontal), strict=True):
         path.moveTo(column, row - 1)
         path.lineTo(column, row)
-    for row, column in zip(*np.nonzero(vertical)):
+    for row, column in zip(*np.nonzero(vertical), strict=True):
         path.moveTo(column - 1, row)
         path.lineTo(column, row)
     return path

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from paintv2.core import brush_modes, brush_tips
-from paintv2.core.brush_tips import StampRequest, TIPS
+from paintv2.core.brush_tips import TIPS, StampRequest
 from paintv2.core.stroke import StrokeBuffers, StrokeEngine
 
 

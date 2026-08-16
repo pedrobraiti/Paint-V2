@@ -194,7 +194,7 @@ class CanvasView(QWidget):
 
         self.set_selection_outline(selection_outline(self._selection))
 
-    def canvas_widget(self) -> "CanvasView":
+    def canvas_widget(self) -> CanvasView:
         return self
 
     # ------------------------------------------------------------ navegação

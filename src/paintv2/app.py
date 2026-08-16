@@ -15,7 +15,7 @@ from .paths import default_documents_dir
 from .projects import ProjectLibrary
 from .ui.dialogs import NewImageDialog
 from .ui.hub_window import HubWindow
-from .ui.main_window import MainWindow, OPEN_FILTER
+from .ui.main_window import OPEN_FILTER, MainWindow
 from .ui.theme import build_stylesheet
 
 WINDOWS_APP_ID = "PaintV2.Editor.1"

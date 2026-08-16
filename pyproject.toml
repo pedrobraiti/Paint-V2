@@ -31,3 +31,20 @@ paintv2 = ["resources/*"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 96
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+# Erros reais, imports desorganizados e modernizações de sintaxe. Regras de
+# estilo subjetivo ficam de fora: o código segue as convenções descritas em
+# CLAUDE.md, que uma ferramenta não consegue conferir.
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "C4"]
+ignore = [
+    "B008",  # chamadas em valores padrão são intencionais nos dataclasses de Qt
+]
+
+[tool.ruff.lint.per-file-ignores]
+"packaging/paintv2.spec" = ["F821"]  # Analysis/PYZ/EXE vêm do PyInstaller

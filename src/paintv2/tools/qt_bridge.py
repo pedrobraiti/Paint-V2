@@ -97,8 +97,10 @@ def _selection_clip(selection: Selection) -> QPainterPath:
         line = mask[row, x : x + width]
         if not line.any():
             continue
+        # O preenchimento com False nas duas pontas garante que as transições
+        # saiam sempre em pares (início, fim) de segmento.
         edges = np.flatnonzero(np.diff(np.concatenate(([False], line, [False])).astype(np.int8)))
-        for start, end in zip(edges[0::2], edges[1::2]):
+        for start, end in zip(edges[0::2], edges[1::2], strict=True):
             path.addRect(x + int(start), row, int(end - start), 1)
     return path.simplified()
 

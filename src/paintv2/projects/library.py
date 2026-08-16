@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -48,7 +48,7 @@ class ProjectEntry:
         try:
             return datetime.fromisoformat(self.opened_at)
         except ValueError:
-            return datetime.fromtimestamp(0, tz=timezone.utc)
+            return datetime.fromtimestamp(0, tz=UTC)
 
     @property
     def exists(self) -> bool:
@@ -88,7 +88,7 @@ class ProjectLibrary:
             name=Path(path).name,
             width=int(width),
             height=int(height),
-            opened_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            opened_at=datetime.now(UTC).isoformat(timespec="seconds"),
             thumbnail=str(self._write_thumbnail(path, pixels)),
         )
         self._entries = [
