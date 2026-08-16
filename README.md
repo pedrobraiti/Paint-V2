@@ -19,7 +19,8 @@ duas coisas independentes:
 - **Ponta** — a forma e a dinâmica do carimbo: Pincel, Lápis, Spray, Caligrafia 1
   e 2, Marcador, Óleo, Giz de cera, Lápis natural, Aquarela, Quadrado, Macio.
 - **Modo** — o que acontece com os pixels sob o carimbo: pintar, apagar, saturar,
-  blend, desfocar, dar nitidez, clarear, escurecer, girar o matiz.
+  contraste, realce tonal, blend, desfocar, dar nitidez, clarear, escurecer,
+  girar o matiz.
 
 Como os dois eixos são ortogonais, **qualquer efeito funciona com qualquer
 ponta**. Dá para saturar com o Spray, borrar com a Caligrafia ou clarear com o
@@ -41,6 +42,23 @@ manchas.
 O blend arrasta a cor de onde o pincel esteve para onde ele está, dissolvendo
 vincos, emendas e transições duras — o que o desfoque simples não resolve, porque
 ele só borra no lugar em vez de misturar direções.
+
+### Contraste e realce tonal
+
+O **contraste** afasta claros e escuros em torno do cinza médio, do jeito
+clássico. O **realce tonal** faz o mesmo por outro caminho: aplica uma curva em S
+sobre a luminância, separando os meios-tons enquanto branco e preto ficam onde
+estão. Dá para insistir na mesma área sem chapá-la, e a cor acompanha o brilho em
+vez de saturar junto.
+
+### Pincéis grandes
+
+A rampa de tamanho vai até 1000 px, mas o campo ao lado aceita até 5000 — cobrir
+uma foto 4K numa passada só é um caso real, e digitar o número é mais rápido que
+arrastar. Cada carimbo é processado em faixas horizontais paralelas, então o pico
+de memória não acompanha o tamanho do pincel e os núcleos ociosos entram no
+trabalho: um traço de ponta a ponta numa imagem 3840×2160 ficou entre **2,5× e 5×
+mais rápido** que na primeira versão.
 
 ---
 
@@ -75,7 +93,7 @@ arrastar-e-soltar de imagens.
 
 ## Instalação
 
-Baixe o `Paint-V2-Setup-1.0.0.exe` mais recente em
+Baixe o `Paint-V2-Setup-1.1.0.exe` mais recente em
 [Releases](../../releases) e execute. A instalação é por usuário — não pede
 permissão de administrador — e cria o atalho no Menu Iniciar, então basta
 pesquisar por **Paint-V2** no Windows.
@@ -117,7 +135,7 @@ python scripts/build_app.py
 ```
 
 Produz `dist/Paint-V2/Paint-V2.exe` e, se o [Inno Setup 6](https://jrsoftware.org/isinfo.php)
-estiver instalado, também `dist/installer/Paint-V2-Setup-1.0.0.exe`.
+estiver instalado, também `dist/installer/Paint-V2-Setup-1.1.0.exe`.
 
 ```powershell
 winget install -e --id JRSoftware.InnoSetup   # se ainda não tiver
@@ -136,14 +154,17 @@ winget install -e --id JRSoftware.InnoSetup   # se ainda não tiver
 | `F` | Balde de tinta | | `R` | Formas |
 | `K` | Conta-gotas | | `T` | Texto |
 | `S` | Saturação | | `U` | Desfoque |
-| `G` | Blend | | `H` | Nitidez |
-| `O` | Clarear | | `I` | Escurecer |
+| `D` | Contraste | | `H` | Nitidez |
+| `V` | Realce tonal | | `O` | Clarear |
+| `G` | Blend | | `I` | Escurecer |
 | `J` | Matiz | | `Z` | Lupa |
 
-`X` troca as cores de frente e de fundo. `Ctrl` + roda dá zoom, `Espaço` ou o
-botão do meio arrastam a imagem, `Ctrl+0` volta ao tamanho real e `Ctrl+9`
-ajusta à janela. O **botão direito** pinta com a cor de fundo e inverte os
-efeitos de saturação, matiz, clarear e escurecer.
+`X` troca as cores de frente e de fundo. `Ctrl+Z` desfaz e `Ctrl+Shift+Z` (ou
+`Ctrl+Y`) refaz — sem mexer no zoom, que só é reenquadrado quando o passo
+desfeito mudou as dimensões da imagem. `Ctrl` + roda dá zoom, `Espaço` ou o botão
+do meio arrastam a imagem, `Ctrl+0` volta ao tamanho real e `Ctrl+9` ajusta à
+janela. O **botão direito** pinta com a cor de fundo e inverte os efeitos de
+saturação, contraste, realce tonal, matiz, clarear e escurecer.
 
 ---
 
@@ -157,6 +178,7 @@ src/paintv2/
 │   ├── brush_tips      pontas: a forma do carimbo
 │   ├── brush_modes     modos: o efeito sob o carimbo
 │   ├── stroke          motor de traço (espaçamento, máscara, snapshot)
+│   ├── parallel        divisão do carimbo em faixas paralelas
 │   ├── snapshot        cópia preguiçosa por ladrilhos
 │   ├── history         desfazer/refazer por patch
 │   ├── selection       máscara da seleção ativa
@@ -167,12 +189,15 @@ src/paintv2/
 └── projects/      biblioteca de recentes exibida no HUB
 ```
 
-Três decisões sustentam o desempenho:
+Quatro decisões sustentam o desempenho:
 
 1. **O `QImage` aponta para a memória do array NumPy.** Uma pincelada aparece na
    tela sem conversão nem cópia; basta invalidar o retângulo alterado.
 2. **Tudo opera sobre a bounding box suja**, nunca sobre a imagem inteira.
-3. **O histórico guarda patches**, não a imagem completa — desfazer um traço numa
+3. **Cada carimbo é fatiado em faixas horizontais** processadas em paralelo. O
+   NumPy libera a GIL nas operações pesadas, então são threads de verdade usando
+   vários núcleos — e o pico de memória passa a depender da faixa, não do pincel.
+4. **O histórico guarda patches**, não a imagem completa — desfazer um traço numa
    foto de 24 MP custa alguns KB, não 96 MB.
 
 As decisões de projeto e o porquê de cada uma estão em

@@ -61,6 +61,10 @@ class CanvasView(QWidget):
 
         self._zoom = 1.0
         self._origin = QPointF(0.0, 0.0)
+        # Dimensões para as quais o enquadramento atual foi calculado: se o
+        # documento mudar de tamanho, a vista precisa ser refeita; se não mudar,
+        # o zoom do usuário tem de ser preservado.
+        self._framed_size = (self._document.width, self._document.height)
         self._cursor_position = QPointF(-1.0, -1.0)
         self._cursor_inside = False
 
@@ -113,12 +117,18 @@ class CanvasView(QWidget):
     def zoom(self) -> float:
         return self._zoom
 
+    @property
+    def framed_size(self) -> tuple[int, int]:
+        """Dimensões do documento para as quais a vista atual foi enquadrada."""
+        return self._framed_size
+
     def set_document(self, document: Document) -> None:
         """Troca o documento em edição e reenquadra a vista."""
         self._tool.commit_pending()
         self._document = document
         self._selection = Selection(document.width, document.height)
         self._selection_outline = None
+        self._framed_size = (document.width, document.height)
         self._pending_fit = True
         self.fit_to_view()
         self.document_modified.emit()
@@ -129,6 +139,7 @@ class CanvasView(QWidget):
         """Reajusta seleção e enquadramento depois de mudar o tamanho da imagem."""
         self._selection = Selection(self._document.width, self._document.height)
         self._selection_outline = None
+        self._framed_size = (self._document.width, self._document.height)
         self._clamp_origin()
         self.selection_changed.emit()
         self.update()

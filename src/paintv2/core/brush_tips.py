@@ -14,7 +14,14 @@ from functools import lru_cache
 import numpy as np
 
 MIN_SIZE = 1.0
-MAX_SIZE = 500.0
+MAX_SIZE = 5000.0
+"""Teto do pincel, em pixels.
+
+Alto de propósito: retocar uma foto 4K com um pincel de 500 px exige varrer a
+imagem de um lado ao outro. O carimbo é processado em faixas
+(:mod:`paintv2.core.parallel`), então o pico de memória não acompanha esse
+número — o que sobe é só a máscara do carimbo."""
+
 SUBPIXEL_STEPS = 4
 
 

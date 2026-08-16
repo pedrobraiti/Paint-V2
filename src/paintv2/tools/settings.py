@@ -12,9 +12,15 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QColor
 
 from ..core.brush_modes import MODE_DEFINITIONS
-from ..core.brush_tips import DEFAULT_TIP_KEY
+from ..core.brush_tips import DEFAULT_TIP_KEY, MAX_SIZE, MIN_SIZE
 
 DEFAULT_BRUSH_SIZE = 14
+BRUSH_SLIDER_MAX = 1000
+"""Fim da rampa do controle deslizante.
+
+Passar disso na rampa tornaria cada pixel dela um salto grande demais para
+ajuste fino; quem precisa de mais digita o número no campo ao lado, que aceita
+até ``MAX_SIZE``."""
 DEFAULT_TOLERANCE = 18
 DEFAULT_LINE_WIDTH = 3
 DEFAULT_FONT_SIZE = 24
@@ -103,7 +109,7 @@ class ToolSettings(QObject):
 
     @brush_size.setter
     def brush_size(self, value: int) -> None:
-        value = max(1, min(int(value), 500))
+        value = max(int(MIN_SIZE), min(int(value), int(MAX_SIZE)))
         if value != self._brush_size:
             self._brush_size = value
             self.changed.emit()

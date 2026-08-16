@@ -2,8 +2,8 @@
 # Consumido pelo PyInstaller através da opção `version` no .spec.
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(1, 0, 0, 0),
-        prodvers=(1, 0, 0, 0),
+        filevers=(1, 1, 0, 0),
+        prodvers=(1, 1, 0, 0),
         mask=0x3F,
         flags=0x0,
         OS=0x40004,
@@ -19,12 +19,12 @@ VSVersionInfo(
                     [
                         StringStruct("CompanyName", "Paint-V2"),
                         StringStruct("FileDescription", "Paint-V2 — editor de imagens"),
-                        StringStruct("FileVersion", "1.0.0.0"),
+                        StringStruct("FileVersion", "1.1.0.0"),
                         StringStruct("InternalName", "Paint-V2"),
                         StringStruct("LegalCopyright", "Distribuído sob a licença MIT"),
                         StringStruct("OriginalFilename", "Paint-V2.exe"),
                         StringStruct("ProductName", "Paint-V2"),
-                        StringStruct("ProductVersion", "1.0.0.0"),
+                        StringStruct("ProductVersion", "1.1.0.0"),
                     ],
                 )
             ]

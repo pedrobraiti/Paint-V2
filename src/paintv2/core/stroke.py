@@ -25,6 +25,7 @@ from .brush_tips import (
     render_stamp,
     stamp_extent,
 )
+from .parallel import Band, run_in_parallel, split_into_bands
 from .pixels import Rect, clip_rect, to_float, to_uint8, union_rect, view
 from .snapshot import TileSnapshot
 
@@ -173,14 +174,35 @@ class StrokeEngine:
         mask_region *= np.float32(1.0) - stamp
         np.subtract(np.float32(1.0), mask_region, out=mask_region)
 
-        base = to_float(self._snapshot.region(rect))
-        view(self._pixels, rect)[:] = to_uint8(self._mode.apply(base, mask_region))
+        # Capturar os ladrilhos antes de dividir o trabalho: é a única etapa que
+        # escreve no dicionário do snapshot, e as bandas só leem.
+        self._snapshot.preserve(rect)
+        bands = list(split_into_bands(rect, self._mode.halo))
+        if len(bands) == 1:
+            self._process_band(bands[0])
+            return
+        run_in_parallel(self._process_band, bands)
+
+    def _process_band(self, band: Band) -> None:
+        base = to_float(self._snapshot.region(band.padded))
+        mask = view(self._buffers.mask, band.padded)
+        result = self._mode.apply(base, mask)
+        view(self._pixels, band.rect)[:] = to_uint8(band.crop(result))
 
     def _apply_sequential(self, rect: Rect, stamp: np.ndarray) -> None:
-        target = view(self._pixels, rect)
-        self._snapshot.region(rect)
-        current = to_float(target)
-        target[:] = to_uint8(self._mode.apply(current, stamp))
+        """Aplica um modo com estado, banda a banda e sempre na mesma ordem.
+
+        Aqui não há paralelismo: o modo carrega estado entre as chamadas (o
+        acumulador do blend), e duas threads mexendo nele embaralhariam o
+        arrasto de cor.
+        """
+        self._snapshot.preserve(rect)
+        for band in split_into_bands(rect, halo=0):
+            target = view(self._pixels, band.rect)
+            self._mode.set_band(band.rows_within(rect), (rect[3], rect[2]))
+            current = to_float(target)
+            stamp_band = stamp[band.rows_within(rect)]
+            target[:] = to_uint8(self._mode.apply(current, stamp_band))
 
     def _effective_size(self, pressure: float) -> float:
         if pressure >= 0.999:

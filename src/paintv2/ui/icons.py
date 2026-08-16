@@ -333,6 +333,27 @@ def _burn(painter: QPainter) -> None:
     painter.drawPath(inner)
 
 
+def _contrast(painter: QPainter) -> None:
+    """Círculo com metade cheia — o símbolo clássico de contraste."""
+    painter.save()
+    painter.setBrush(painter.pen().color())
+    painter.setPen(Qt.PenStyle.NoPen)
+    half = QPainterPath(QPointF(12.0, 3.4))
+    half.arcTo(QRectF(3.4, 3.4, 17.2, 17.2), 90.0, -180.0)
+    half.closeSubpath()
+    painter.drawPath(half)
+    painter.restore()
+    _circle(painter, 12.0, 12.0, 8.6)
+
+
+def _levels(painter: QPainter) -> None:
+    """Curva em S dentro de uma moldura, como num editor de curvas."""
+    painter.drawRect(QRectF(3.5, 3.5, 17.0, 17.0))
+    curve = QPainterPath(QPointF(3.5, 20.5))
+    curve.cubicTo(QPointF(11.0, 19.0), QPointF(13.0, 5.0), QPointF(20.5, 3.5))
+    painter.drawPath(curve)
+
+
 def _hue(painter: QPainter) -> None:
     _circle(painter, 12.0, 12.0, 8.4)
     _dot(painter, 12.0, 7.4, 2.0)
@@ -458,6 +479,8 @@ DRAWERS: dict[str, Drawer] = {
     "dodge": _dodge,
     "burn": _burn,
     "hue": _hue,
+    "contrast": _contrast,
+    "levels": _levels,
     "adjustments": _adjustments,
     "rotate_right": _rotate_right,
     "rotate_left": _rotate_left,

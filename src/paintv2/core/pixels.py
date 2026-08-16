@@ -15,13 +15,23 @@ Rect = tuple[int, int, int, int]
 
 
 def to_float(pixels: np.ndarray) -> np.ndarray:
-    """``uint8`` 0..255 para ``float32`` 0..1."""
-    return pixels.astype(np.float32) * np.float32(1.0 / 255.0)
+    """``uint8`` 0..255 para ``float32`` 0..1.
+
+    A escala acontece no lugar, sobre o array recém-convertido: no caminho quente
+    do pincel cada temporário a menos é um megabyte a menos de tráfego de memória
+    por carimbo.
+    """
+    result = pixels.astype(np.float32)
+    result *= np.float32(1.0 / 255.0)
+    return result
 
 
 def to_uint8(pixels: np.ndarray) -> np.ndarray:
     """``float32`` 0..1 para ``uint8`` 0..255, com clamp e arredondamento."""
-    return (np.clip(pixels, 0.0, 1.0) * np.float32(255.0) + np.float32(0.5)).astype(np.uint8)
+    scaled = np.clip(pixels, 0.0, 1.0)
+    scaled *= np.float32(255.0)
+    scaled += np.float32(0.5)
+    return scaled.astype(np.uint8)
 
 
 def clip_rect(rect: Rect, width: int, height: int) -> Rect | None:
@@ -87,17 +97,31 @@ def box_blur(image: np.ndarray, radius: int) -> np.ndarray:
     """Desfoque de caixa separável via soma acumulada — O(n) no raio.
 
     Trabalha com RGB premultiplicado pelo alpha para que pixels transparentes não
-    contaminem os vizinhos com sua cor arbitrária.
+    contaminem os vizinhos com sua cor arbitrária. Quando a região é toda opaca —
+    o caso comum ao retocar uma foto — os dois passes de premultiplicação são
+    puro desperdício e por isso ficam de fora.
     """
     if radius < 1:
         return image
-    premultiplied = image.copy()
-    premultiplied[..., :3] *= premultiplied[..., 3:4]
-    blurred = _box_blur_axis(_box_blur_axis(premultiplied, radius, axis=1), radius, axis=0)
-    alpha = blurred[..., 3:4]
-    safe_alpha = np.where(alpha > 1e-6, alpha, np.float32(1.0))
-    blurred[..., :3] /= safe_alpha
+
+    opaque = bool((image[..., 3] >= 1.0).all())
+    working = image if opaque else image.copy()
+    if not opaque:
+        working[..., :3] *= working[..., 3:4]
+
+    blurred = _box_blur_axis(_box_blur_axis(working, radius, axis=1), radius, axis=0)
+
+    if not opaque:
+        alpha = blurred[..., 3:4]
+        blurred[..., :3] /= np.where(alpha > 1e-6, alpha, np.float32(1.0))
     return blurred
+
+
+def _axis_slice(array: np.ndarray, axis: int, start: int, stop: int) -> np.ndarray:
+    """Fatia ao longo de um eixo qualquer — uma vista, sem cópia."""
+    selector: list[slice] = [slice(None)] * array.ndim
+    selector[axis] = slice(start, stop)
+    return array[tuple(selector)]
 
 
 def _box_blur_axis(image: np.ndarray, radius: int, axis: int) -> np.ndarray:
@@ -106,16 +130,18 @@ def _box_blur_axis(image: np.ndarray, radius: int, axis: int) -> np.ndarray:
     span = min(radius, max(0, length - 1))
     if span < 1:
         return image
+
     padding = [(0, 0)] * image.ndim
-    padding[axis] = (span, span)
+    padding[axis] = (span + 1, span)
     padded = np.pad(image, padding, mode="edge")
+    # A primeira linha do preenchimento é zerada para servir de origem da soma
+    # acumulada, o que evita concatenar um bloco de zeros depois.
+    _axis_slice(padded, axis, 0, 1)[:] = 0.0
     cumulative = np.cumsum(padded, axis=axis, dtype=np.float32)
-    zeros_shape = list(cumulative.shape)
-    zeros_shape[axis] = 1
-    cumulative = np.concatenate(
-        [np.zeros(zeros_shape, dtype=np.float32), cumulative], axis=axis
-    )
+
     window = 2 * span + 1
-    upper = np.take(cumulative, np.arange(window, window + length), axis=axis)
-    lower = np.take(cumulative, np.arange(0, length), axis=axis)
-    return (upper - lower) / np.float32(window)
+    result = _axis_slice(cumulative, axis, window, window + length) - _axis_slice(
+        cumulative, axis, 0, length
+    )
+    result *= np.float32(1.0 / window)
+    return result

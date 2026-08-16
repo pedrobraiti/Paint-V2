@@ -53,6 +53,38 @@ que num traço de pincel costuma ser uma fração mínima da tela.
 **Alternativas consideradas:** snapshot completo — simples porém proibitivo; diff por
 tiles — ganho marginal sobre o bbox para a carga real de um editor de pintura.
 
+## 2026-08-16 — Carimbo processado em faixas horizontais paralelas
+
+**Motivo:** o usuário pediu pincéis bem maiores (1000–3000 px) para retocar fotos
+4K, e o caminho antigo processava o carimbo inteiro de uma vez. Um pincel de
+3000 px viraria centenas de megabytes de arrays intermediários por carimbo — a
+interface travava antes disso, e a memória estouraria em seguida. Fatiar o
+carimbo resolve os dois problemas com o mesmo mecanismo: o pico de memória passa
+a depender da faixa, e as faixas são independentes, então rodam em threads de
+verdade (o NumPy libera a GIL). Medido num traço de ponta a ponta em 3840×2160,
+com pincel de 500 px: saturação 848 → 185 ms, desfoque 1874 → 667 ms.
+
+**Alternativas consideradas:** GPU via CuPy ou compute shader — traria dependência
+de CUDA (ou de um pipeline gráfico inteiro) e um segundo caminho de código para
+manter, em troca de um ganho que o paralelismo em CPU já entrega para esta carga;
+processos em vez de threads — o custo de copiar a região para cada processo
+anularia o ganho, já que o gargalo é justamente tráfego de memória.
+
+## 2026-08-16 — Realce tonal por curva em S, e não por auto-níveis
+
+**Motivo:** o pedido era "aumentar a diferença entre os valores mais claros e os
+mais escuros". O caminho óbvio — medir o mínimo e o máximo sob o pincel e esticar
+a faixa — é incompatível com o processamento em faixas: cada faixa mediria a
+própria estatística e o resultado sairia listrado. A curva em S é uma função
+ponto a ponto, dá o mesmo resultado independente de como o trabalho é dividido,
+e ainda protege branco e preto do ceifamento. Aplicada sobre a luminância (com o
+RGB reescalado junto), mexe no tom sem girar a cor.
+
+**Alternativas consideradas:** auto-níveis com estatística do carimbo inteiro —
+exigiria materializar a região toda antes de fatiar, desfazendo o limite de
+memória; contraste linear — já existe como ferramenta separada, e ceifa os
+extremos, que é justamente o que se quer evitar ao insistir numa área.
+
 ## 2026-08-16 — Máscara do traço acumulada em modo *screen*
 
 **Motivo:** a regra "o efeito não se intensifica ao repassar" e a expectativa de

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSlider,
     QTextEdit,
+    QToolBar,
     QVBoxLayout,
     QWidget,
 )
@@ -72,6 +73,7 @@ class MainWindow(QMainWindow):
 
         self._build_layout()
         self._build_actions()
+        self._build_toolbar()
         self._build_status_bar()
         self._connect_signals()
 
@@ -130,15 +132,16 @@ class MainWindow(QMainWindow):
 
     def _build_actions(self) -> None:
         menu = self.menuBar()
+        self._actions: dict[str, QAction] = {}
 
         file_menu = menu.addMenu("&Arquivo")
-        self._add_action(file_menu, "Início", "home", "Ctrl+Shift+H", self._go_to_hub)
+        self._add_action(file_menu, "Início", "home", "Ctrl+Shift+H", self._go_to_hub, name="hub")
         file_menu.addSeparator()
-        self._add_action(file_menu, "Nova imagem", "new_file", QKeySequence.StandardKey.New, self.new_image)
-        self._add_action(file_menu, "Abrir…", "folder", QKeySequence.StandardKey.Open, self.open_file)
+        self._add_action(file_menu, "Nova imagem", "new_file", QKeySequence.StandardKey.New, self.new_image, name="new")
+        self._add_action(file_menu, "Abrir…", "folder", QKeySequence.StandardKey.Open, self.open_file, name="open")
         file_menu.addSeparator()
         self._save_action = self._add_action(
-            file_menu, "Salvar", "save", QKeySequence.StandardKey.Save, self.save
+            file_menu, "Salvar", "save", QKeySequence.StandardKey.Save, self.save, name="save"
         )
         self._add_action(file_menu, "Salvar como…", "save", "Ctrl+Shift+S", self.save_as)
         file_menu.addSeparator()
@@ -146,10 +149,15 @@ class MainWindow(QMainWindow):
 
         edit_menu = menu.addMenu("&Editar")
         self._undo_action = self._add_action(
-            edit_menu, "Desfazer", "undo", QKeySequence.StandardKey.Undo, self.undo
+            edit_menu, "Desfazer", "undo", QKeySequence.StandardKey.Undo, self.undo, name="undo"
         )
         self._redo_action = self._add_action(
-            edit_menu, "Refazer", "redo", QKeySequence.StandardKey.Redo, self.redo
+            edit_menu, "Refazer", "redo", QKeySequence.StandardKey.Redo, self.redo, name="redo"
+        )
+        # No Windows a tecla padrão de refazer é Ctrl+Y, mas Ctrl+Shift+Z é o que
+        # a mão procura em editor de imagem. Os dois passam a valer.
+        self._redo_action.setShortcuts(
+            [QKeySequence(QKeySequence.StandardKey.Redo), QKeySequence("Ctrl+Shift+Z")]
         )
         edit_menu.addSeparator()
         self._add_action(edit_menu, "Recortar", "cut", QKeySequence.StandardKey.Cut, self.cut)
@@ -180,7 +188,7 @@ class MainWindow(QMainWindow):
         self._add_action(image_menu, "Inverter na vertical", "flip_vertical", "", lambda: self.flip(False))
 
         adjust_menu = menu.addMenu("A&justes")
-        self._add_action(adjust_menu, "Ajustes de imagem…", "adjustments", "Ctrl+M", self.open_adjustments)
+        self._add_action(adjust_menu, "Ajustes de imagem…", "adjustments", "Ctrl+M", self.open_adjustments, name="adjustments")
         self._add_action(
             adjust_menu,
             "Ajustes na seleção…",
@@ -190,10 +198,10 @@ class MainWindow(QMainWindow):
         )
 
         view_menu = menu.addMenu("&Ver")
-        self._add_action(view_menu, "Aproximar", "zoom_in", QKeySequence.StandardKey.ZoomIn, self._canvas.zoom_in)
-        self._add_action(view_menu, "Afastar", "zoom_out", QKeySequence.StandardKey.ZoomOut, self._canvas.zoom_out)
+        self._add_action(view_menu, "Aproximar", "zoom_in", QKeySequence.StandardKey.ZoomIn, self._canvas.zoom_in, name="zoom_in")
+        self._add_action(view_menu, "Afastar", "zoom_out", QKeySequence.StandardKey.ZoomOut, self._canvas.zoom_out, name="zoom_out")
         self._add_action(view_menu, "Tamanho real", "", "Ctrl+0", self._canvas.zoom_to_actual_size)
-        self._add_action(view_menu, "Ajustar à janela", "", "Ctrl+9", self._canvas.fit_to_view)
+        self._add_action(view_menu, "Ajustar à janela", "resize", "Ctrl+9", self._canvas.fit_to_view, name="fit")
 
         help_menu = menu.addMenu("A&juda")
         self._add_action(help_menu, "Atalhos e ferramentas", "info", "F1", self.show_help)
@@ -201,7 +209,9 @@ class MainWindow(QMainWindow):
 
         self._update_history_actions()
 
-    def _add_action(self, menu, text: str, icon: str, shortcut, slot) -> QAction:
+    def _add_action(
+        self, menu, text: str, icon: str, shortcut, slot, name: str | None = None
+    ) -> QAction:
         action = QAction(text, self)
         if icon:
             action.setIcon(get_icon(icon, 18))
@@ -210,7 +220,33 @@ class MainWindow(QMainWindow):
         action.triggered.connect(slot)
         menu.addAction(action)
         self.addAction(action)
+        if name:
+            # A barra reaproveita a mesma QAction do menu, para que estado
+            # habilitado e rótulo (ex.: "Desfazer Saturação") andem juntos.
+            self._actions[name] = action
         return action
+
+    def _build_toolbar(self) -> None:
+        """Barra de acesso rápido acima da barra de opções."""
+        toolbar = QToolBar("Ações rápidas", self)
+        toolbar.setMovable(False)
+        toolbar.setIconSize(QSize(20, 20))
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+
+        groups = (
+            ("hub",),
+            ("new", "open", "save"),
+            ("undo", "redo"),
+            ("zoom_out", "zoom_in", "fit"),
+            ("adjustments",),
+        )
+        for index, group in enumerate(groups):
+            if index:
+                toolbar.addSeparator()
+            for name in group:
+                toolbar.addAction(self._actions[name])
+
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
 
     def _connect_signals(self) -> None:
         self._tool_box.tool_selected.connect(self._activate_tool)
@@ -322,14 +358,28 @@ class MainWindow(QMainWindow):
             return
         self._canvas.commit_active_tool()
         if self.document.undo():
-            self._after_document_structure_change()
+            self._after_history_step()
 
     def redo(self) -> None:
         if self._forward_to_text_widget("redo"):
             return
         self._canvas.commit_active_tool()
         if self.document.redo():
+            self._after_history_step()
+
+    def _after_history_step(self) -> None:
+        """Atualiza a vista depois de desfazer ou refazer.
+
+        Só reenquadra quando o passo mudou as dimensões da imagem (girar,
+        recortar, redimensionar). Desfazer uma pincelada não pode mexer no zoom:
+        quem está trabalhando ampliado num detalhe perderia o lugar a cada
+        Ctrl+Z.
+        """
+        if (self.document.width, self.document.height) != self._canvas.framed_size:
             self._after_document_structure_change()
+            return
+        self._canvas.refresh()
+        self._on_document_modified()
 
     def copy(self) -> None:
         if self._forward_to_text_widget("copy"):

@@ -8,7 +8,7 @@
 ; Compilar com:  iscc packaging\paintv2.iss
 
 #define AppName "Paint-V2"
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 #define AppPublisher "Paint-V2"
 #define AppExeName "Paint-V2.exe"
 #define AppId "{8B4F2E1C-7D3A-4C6B-9E5F-1A2B3C4D5E6F}"

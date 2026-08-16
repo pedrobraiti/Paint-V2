@@ -178,6 +178,37 @@ class BlendBrushTool(StrokeTool):
         return brush_modes.BlendSmudgeMode(self.amount)
 
 
+class ContrastBrushTool(StrokeTool):
+    key = "contrast"
+    label = "Contraste"
+    icon = "contrast"
+    shortcut = "D"
+    hint = "Afasta claros e escuros da área. Botão direito achata o contraste."
+    mode_key = "contrast"
+    group = "efeitos"
+
+    def create_mode(self, event: CanvasEvent) -> BrushMode:
+        amount = -self.amount if event.is_secondary else self.amount
+        return brush_modes.ContrastMode(amount, self.settings.opacity / 100.0)
+
+
+class LevelsBrushTool(StrokeTool):
+    key = "levels"
+    label = "Realce tonal"
+    icon = "levels"
+    shortcut = "V"
+    hint = (
+        "Separa os meios-tons com curva em S, sem chapar branco nem preto. "
+        "Botão direito suaviza."
+    )
+    mode_key = "levels"
+    group = "efeitos"
+
+    def create_mode(self, event: CanvasEvent) -> BrushMode:
+        amount = -self.amount if event.is_secondary else self.amount
+        return brush_modes.LevelsMode(amount, self.settings.opacity / 100.0)
+
+
 class BlurBrushTool(StrokeTool):
     key = "blur"
     label = "Desfoque"
@@ -258,6 +289,8 @@ STROKE_TOOLS: tuple[type[StrokeTool], ...] = (
     SprayTool,
     EraserTool,
     SaturationBrushTool,
+    ContrastBrushTool,
+    LevelsBrushTool,
     BlendBrushTool,
     BlurBrushTool,
     SharpenBrushTool,

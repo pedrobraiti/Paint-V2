@@ -29,11 +29,20 @@ class TileSnapshot:
         """Quantos ladrilhos já foram preservados — usado em testes e diagnóstico."""
         return len(self._tiles)
 
+    def preserve(self, rect: Rect) -> None:
+        """Captura os ladrilhos que cobrem ``rect``, se ainda não capturados.
+
+        Precisa rodar **antes** de qualquer escrita no retângulo — e, quando o
+        trabalho é dividido entre threads, antes de elas começarem: é a única
+        parte que altera o dicionário de ladrilhos.
+        """
+        self._preserve(rect)
+
     def region(self, rect: Rect) -> np.ndarray:
         """Pixels originais dentro de ``rect``, como cópia contígua.
 
-        Deve ser chamado **antes** de escrever no retângulo, para que os ladrilhos
-        sejam capturados intactos.
+        Só lê ladrilhos já capturados, então é seguro chamar de várias threads
+        depois de um :meth:`preserve` que cubra a área toda.
         """
         x, y, width, height = rect
         self._preserve(rect)

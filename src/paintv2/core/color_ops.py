@@ -161,6 +161,40 @@ def posterize(rgb: np.ndarray, levels: int) -> np.ndarray:
     return np.round(np.clip(rgb, 0.0, 1.0) * steps) / steps
 
 
+def tonal_curve(values: np.ndarray, amount: float) -> np.ndarray:
+    """Afasta (ou aproxima) claros e escuros sem estourar os extremos.
+
+    ``amount`` positivo mistura a entrada com uma curva em S (``smoothstep``):
+    os meios-tons se separam enquanto branco e preto ficam onde estão — o
+    contraste linear, por comparação, empurra tudo e ceifa os extremos.
+    ``amount`` negativo achata a faixa em direção ao cinza médio.
+
+    As duas curvas são monotônicas, então nenhuma inversão de tom aparece por
+    mais que a ferramenta seja repassada.
+    """
+    if amount == 0.0:
+        return values
+    clamped = np.clip(values, 0.0, 1.0)
+    if amount > 0.0:
+        curved = clamped * clamped * (np.float32(3.0) - np.float32(2.0) * clamped)
+        weight = np.float32(min(amount, 1.0))
+    else:
+        curved = np.float32(0.5) + (clamped - np.float32(0.5)) * np.float32(0.35)
+        weight = np.float32(min(-amount, 1.0))
+    return clamped + (curved - clamped) * weight
+
+
+def apply_to_luminance(rgb: np.ndarray, target_luminance: np.ndarray) -> np.ndarray:
+    """Reescala o RGB para atingir uma luminância alvo, preservando o matiz.
+
+    Mexer nos canais um a um giraria a cor junto com o tom; escalar todos pelo
+    mesmo fator muda só o brilho, que é o que uma ferramenta tonal deve fazer.
+    """
+    current = luminance(rgb)[..., None]
+    safe = np.where(current > 1e-4, current, np.float32(1.0))
+    return rgb * (target_luminance[..., None] / safe)
+
+
 def blend_dodge(rgb: np.ndarray, strength: np.ndarray) -> np.ndarray:
     """Clareia preservando as altas luzes (``color dodge`` suavizado)."""
     return rgb + (np.float32(1.0) - rgb) * strength

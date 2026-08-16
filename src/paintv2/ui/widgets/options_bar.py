@@ -22,9 +22,10 @@ from PySide6.QtWidgets import (
 )
 
 from ...core.brush_modes import MODES_BY_KEY
-from ...core.brush_tips import TIPS
+from ...core.brush_tips import MAX_SIZE, MIN_SIZE, TIPS
 from ...tools.base import Tool
 from ...tools.settings import (
+    BRUSH_SLIDER_MAX,
     SHAPE_FILL_NONE,
     SHAPE_FILL_PRIMARY,
     SHAPE_FILL_SECONDARY,
@@ -104,7 +105,14 @@ class OptionsBar(QWidget):
         return self._tip_combo
 
     def _build_size(self) -> QWidget:
-        self._size_slider, self._size_spin, widget = _slider_with_spin(1, 500)
+        # A rampa vai até 1000 para continuar utilizável no arraste; o campo
+        # aceita o pincel inteiro, para quem precisa cobrir uma foto 4K de uma vez.
+        self._size_slider, self._size_spin, widget = _slider_with_spin(
+            int(MIN_SIZE), BRUSH_SLIDER_MAX, spin_maximum=int(MAX_SIZE)
+        )
+        self._size_spin.setToolTip(
+            f"Até {int(MAX_SIZE)} px — digite valores acima de {BRUSH_SLIDER_MAX}"
+        )
         self._size_slider.valueChanged.connect(
             lambda value: setattr(self._settings, "brush_size", value)
         )
@@ -304,7 +312,15 @@ class OptionsBar(QWidget):
         _select_data(self._fill_combo, self._settings.shape_fill)
 
 
-def _slider_with_spin(minimum: int, maximum: int) -> tuple[QSlider, QSpinBox, QWidget]:
+def _slider_with_spin(
+    minimum: int, maximum: int, spin_maximum: int | None = None
+) -> tuple[QSlider, QSpinBox, QWidget]:
+    """Rampa e campo numérico sincronizados.
+
+    O campo pode aceitar mais que a rampa: nesse caso a rampa fica no fim e o
+    valor real continua sendo o do campo — é o que permite um pincel de 3000 px
+    sem transformar cada pixel da rampa num salto grosseiro.
+    """
     container = QWidget()
     layout = QHBoxLayout(container)
     layout.setContentsMargins(0, 0, 0, 0)
@@ -315,7 +331,7 @@ def _slider_with_spin(minimum: int, maximum: int) -> tuple[QSlider, QSpinBox, QW
     slider.setFixedWidth(SLIDER_WIDTH)
 
     spin = QSpinBox()
-    spin.setRange(minimum, maximum)
+    spin.setRange(minimum, spin_maximum or maximum)
     spin.setFixedWidth(74)
 
     slider.valueChanged.connect(lambda value: _set_silently(spin, value))

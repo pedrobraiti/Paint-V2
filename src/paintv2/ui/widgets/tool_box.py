@@ -22,8 +22,8 @@ from ...tools.registry import grouped_tool_classes
 from ..icons import get_icon
 
 COLUMNS = 2
-BUTTON_SIZE = 44
-ICON_SIZE = 22
+BUTTON_SIZE = 40
+ICON_SIZE = 20
 
 
 class ToolBox(QWidget):
@@ -38,8 +38,8 @@ class ToolBox(QWidget):
         self._group.setExclusive(True)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 12, 10, 12)
-        layout.setSpacing(14)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
 
         for title, tool_classes in grouped_tool_classes():
             layout.addWidget(self._build_group(title, tool_classes))
@@ -49,14 +49,14 @@ class ToolBox(QWidget):
         container = QWidget()
         box = QVBoxLayout(container)
         box.setContentsMargins(0, 0, 0, 0)
-        box.setSpacing(6)
+        box.setSpacing(5)
 
         label = QLabel(title)
         label.setProperty("role", "section")
         box.addWidget(label)
 
         grid = QGridLayout()
-        grid.setSpacing(6)
+        grid.setSpacing(5)
         for index, tool_class in enumerate(tool_classes):
             button = self._build_button(tool_class)
             grid.addWidget(button, index // COLUMNS, index % COLUMNS)

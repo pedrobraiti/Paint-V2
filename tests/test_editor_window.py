@@ -58,6 +58,69 @@ def test_history_actions_follow_the_document(editor):
     assert editor._redo_action.isEnabled() is True
 
 
+def test_size_field_accepts_more_than_the_slider(editor):
+    """A rampa para em 1000; o campo aceita o pincel inteiro."""
+    from paintv2.core.brush_tips import MAX_SIZE
+    from paintv2.tools.settings import BRUSH_SLIDER_MAX
+
+    options = editor._options
+    assert options._size_slider.maximum() == BRUSH_SLIDER_MAX
+    assert options._size_spin.maximum() == int(MAX_SIZE)
+
+    options._size_spin.setValue(3000)
+    assert editor._settings.brush_size == 3000
+
+
+def test_brush_size_is_clamped_to_the_engine_limit(editor):
+    from paintv2.core.brush_tips import MAX_SIZE
+
+    editor._settings.brush_size = 99_999
+    assert editor._settings.brush_size == int(MAX_SIZE)
+
+
+def test_undo_of_a_brush_stroke_keeps_the_zoom(editor):
+    """Quem está ampliado num detalhe não pode perder o lugar ao apertar Ctrl+Z."""
+    editor._canvas.set_zoom(4.0)
+    zoom_before = editor._canvas.zoom
+
+    rect = (4, 4, 10, 10)
+    before = editor.document.snapshot_region(rect)
+    editor.document.pixels[4:14, 4:14] = 0
+    editor.document.commit_patch("Pincelada", rect, before)
+
+    editor.undo()
+
+    assert editor._canvas.zoom == zoom_before
+
+
+def test_undo_of_a_resize_reframes_the_view(editor):
+    """Já uma mudança de dimensões precisa reenquadrar, senão a vista fica torta."""
+    editor._canvas.set_zoom(4.0)
+    editor.document.resize(40, 30)
+    editor._after_document_structure_change()
+
+    editor.undo()
+
+    assert editor._canvas.framed_size == (editor.document.width, editor.document.height)
+
+
+def test_redo_answers_to_ctrl_shift_z(editor):
+    from PySide6.QtGui import QKeySequence
+
+    shortcuts = [sequence.toString() for sequence in editor._redo_action.shortcuts()]
+    assert QKeySequence("Ctrl+Shift+Z").toString() in shortcuts
+
+
+def test_quick_toolbar_reuses_the_menu_actions(editor):
+    from PySide6.QtWidgets import QToolBar
+
+    toolbar = editor.findChild(QToolBar)
+    assert toolbar is not None
+    actions = toolbar.actions()
+    assert editor._undo_action in actions
+    assert editor._redo_action in actions
+
+
 def test_copy_and_paste_round_trip(editor):
     editor.select_all()
     editor.copy()
