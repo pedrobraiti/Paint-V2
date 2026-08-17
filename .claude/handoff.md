@@ -4,7 +4,13 @@
 > de forma relativamente detalhada. É o PRIMEIRO arquivo que a próxima sessão lê.
 > Mantenha-o vivo e específico — detalhado o bastante para retomar sem reconstruir o raciocínio.
 
-**Última atualização:** 2026-08-16 — versão 1.1.0
+**Última atualização:** 2026-08-16 — versão 1.1.0 publicada, sessão encerrada
+
+## Estado em uma linha
+
+Projeto entregue e aprovado pelo usuário em uso real. Nada pendente: a 1.1.0 está
+publicada, instalada na máquina dele, com README, badges, tópicos do repositório
+e CI em dia. O que vier a seguir são melhorias do `todo.md`.
 
 ## Onde parei
 
@@ -29,7 +35,8 @@ A 1.1.0 responde ao primeiro uso real do usuário. Ele testou a 1.0.0, aprovou
 6. **`Ctrl+Z` reiniciava o zoom.** `_after_history_step` só reenquadra quando o
    passo mudou as dimensões, comparando com `CanvasView.framed_size`.
 
-285 testes passando, lint limpo, CI verde.
+285 testes passando, lint limpo, CI verde. README com badges de CI, release e
+licença; repositório com descrição e tópicos.
 
 ## Contexto mental
 
@@ -69,6 +76,11 @@ números em `packaging/version_info.txt` — os quatro precisam bater.
 
 ## Em aberto / armadilhas
 
+- **Nunca apagar `%APPDATA%\Paint-V2\library.json` para limpar teste.** Aconteceu
+  nesta sessão e levou junto o projeto que o usuário tinha salvo. Scripts de
+  teste e captura devem construir a biblioteca com `ProjectLibrary(root=tmp)` —
+  `scripts/capture_screenshots.py` e os testes já fazem isso; o que sujou foram
+  scripts avulsos que subiam o `PaintApplication` inteiro.
 - O executável não é assinado: o SmartScreen avisa na primeira execução.
 - `BAND_PIXEL_BUDGET` (32k px) e `HALO_BAND_RATIO` (6) em `core/parallel.py` foram
   achados por medição nesta máquina (32 núcleos lógicos). Faixas menores ajudam a

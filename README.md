@@ -1,11 +1,15 @@
 # Paint-V2
 
+[![Testes](https://github.com/pedrobraiti/Paint-V2/actions/workflows/tests.yml/badge.svg)](https://github.com/pedrobraiti/Paint-V2/actions/workflows/tests.yml)
+[![Release](https://img.shields.io/github/v/release/pedrobraiti/Paint-V2)](https://github.com/pedrobraiti/Paint-V2/releases/latest)
+[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue)](LICENSE)
+
 O Paint que você conhece, com os pincéis que ele nunca teve.
 
 Editor de imagens desktop para Windows: tudo o que o Microsoft Paint faz, mais
-uma família de **pincéis de efeito** — saturação, blend, desfoque, nitidez,
-clarear, escurecer e matiz — e um **HUB** inicial com os projetos recentes em
-miniatura.
+uma família de **pincéis de efeito** — saturação, contraste, realce tonal, blend,
+desfoque, nitidez, clarear, escurecer e matiz — e um **HUB** inicial com os
+projetos recentes em miniatura.
 
 ![Paint-V2](docs/editor.png)
 
@@ -123,10 +127,12 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 python -m pytest
 ```
 
-A suíte cobre o núcleo de imagem (operações de cor, motor de pincel, histórico,
-preenchimento, seleção, biblioteca de projetos) e também a interface — as
-ferramentas são exercitadas por eventos de ponteiro reais, com o Qt em modo
-`offscreen`.
+São 285 testes cobrindo o núcleo de imagem (operações de cor, motor de pincel,
+divisão em faixas, histórico, preenchimento, seleção, biblioteca de projetos) e
+também a interface — as ferramentas são exercitadas por eventos de ponteiro
+reais, com o Qt em modo `offscreen`, o que deixa a suíte rodar em CI sem servidor
+gráfico. Cada efeito é testado contra **todas** as pontas, para que a
+independência entre os dois eixos não se perca sem alguém perceber.
 
 ### Gerando o executável e o instalador
 
